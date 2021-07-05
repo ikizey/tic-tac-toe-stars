@@ -37,7 +37,9 @@ class TicTacToeScene: SKScene {
         
     }
     
-    func setScene() {
+    override func sceneDidLoad() {
+        super.sceneDidLoad()
+
         anchorPoint = CGPoint(x: 0.0, y: 0.0)
         
         let padding: CGFloat = 20

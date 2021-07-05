@@ -20,15 +20,9 @@ class TicTakToeGameController: UIViewController {
             let screenSize = UIScreen.main.bounds.size
             
             gameScene = TicTacToeScene(size: screenSize)
-            gameScene.setScene()
             
             newGameScene = NewGameScene(size: screenSize)
-            newGameScene.setScene()
             newGameScene.gameScene = gameScene
-
-            //gameScene.scaleMode = .aspectFill
-            
-            
             
             view.presentScene(newGameScene, transition: SKTransition.moveIn(with: .up, duration: 0.2))
         }

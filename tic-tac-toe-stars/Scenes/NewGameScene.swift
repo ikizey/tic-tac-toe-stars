@@ -13,24 +13,20 @@ class NewGameScene: SKScene {
     
     weak var gameScene: TicTacToeScene!
     
-    func setScene() {
+    override func sceneDidLoad() {
+        super.sceneDidLoad()
         anchorPoint = CGPoint(x: 0.0, y: 0.0)
         
         center = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
         
         addBackground()
-        var ngpos = center!
-        ngpos.y += 70
-        addNewGameButton(withText: "Start New Game", at: ngpos)
-        
-        var pos = center!
-        pos.y -= 70
-        addNewGameButton(withText: "Start New Game with AI", at: pos)
+
+        addNewGameButton()
+        addNewGameWithAIButton()
     }
     
     override func didMove(to view: SKView) {
         super.didMove(to: view)
-    
     }
     
     private func addBackground() {
@@ -42,7 +38,19 @@ class NewGameScene: SKScene {
         addChild(background)
     }
     
-    private func addNewGameButton(withText text: String, at position: CGPoint) {
+    private func addNewGameButton() {
+        var ngpos = center!
+        ngpos.y += 70
+        addButton(withText: "Start New Game", at: ngpos)
+    }
+    
+    private func addNewGameWithAIButton() {
+        var pos = center!
+        pos.y -= 70
+        addButton(withText: "Start New Game with AI", at: pos)
+    }
+    
+    private func addButton(withText text: String, at position: CGPoint) {
         let label = SKLabelNode()
         label.text = text
         label.fontName = "Chalkduster"
