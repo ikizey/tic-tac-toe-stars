@@ -24,10 +24,6 @@ class TicTacToeScene: SKScene {
     private var gameSession: GameSession = GameSession()
     private var strategist: Strategist!
     
-    private var cellPositionAtIndexZero: CGPoint!
-    private var cellSize: CGSize!
-    private var center: CGPoint!
-    
     override func sceneDidLoad() {
         super.sceneDidLoad()
 
@@ -35,12 +31,6 @@ class TicTacToeScene: SKScene {
         strategist.model = gameSession
         
         anchorPoint = CGPoint(x: 0.0, y: 0.0)
-        
-        let padding: CGFloat = 20
-        let thirdOfWidth = size.width / 3 - padding
-        cellSize = CGSize(width: thirdOfWidth, height: thirdOfWidth)
-        center = CGPoint(x: size.width / 2, y: size.height / 2)
-        cellPositionAtIndexZero = CGPoint(x: center.x - cellSize.width, y: center.y + cellSize.height)
         
         addBackground()
         addSettingsSprite()
@@ -68,7 +58,7 @@ class TicTacToeScene: SKScene {
     
     private func addBackground() {
         let background = SKSpriteNode(imageNamed: "background")
-        background.position = CGPoint(x: size.width / 2, y: size.height / 2)
+        background.position = center
         background.zPosition = -1
         background.blendMode = .replace
         background.size = size
@@ -79,7 +69,7 @@ class TicTacToeScene: SKScene {
         infoLabel = SKLabelNode(fontNamed: "Chalkduster")
         infoLabel.fontSize = 40
         infoLabel.fontColor = UIColor.systemIndigo
-        infoLabel.position = CGPoint(x: center.x, y: center.y + cellSize.height * 2)
+        infoLabel.position = infoPosition
         addChild(infoLabel)
         updateInfoLabel()
     }
@@ -113,9 +103,7 @@ class TicTacToeScene: SKScene {
         settingsLabel.name = "sun"
         settingsLabel.zPosition = 2
         settingsLabel.anchorPoint = CGPoint(x: 1, y: 1)
-        let xPos = size.width - 24
-        let yPos = size.height - 24
-        settingsLabel.position = CGPoint(x: xPos, y: yPos)
+        settingsLabel.position = topRight
         addChild(settingsLabel)
     }
     
@@ -139,9 +127,8 @@ class TicTacToeScene: SKScene {
         for case let cell as BoardCell in touchedNodes {
             let index = cell.index!
             makeMove(with: index)
-            return
+            return // otherwise you can activate multiple cells at once
         }
-        
     }
 
     func makeMove(with index: Int) {
@@ -155,6 +142,8 @@ class TicTacToeScene: SKScene {
             } else if gameSession.isEnded {
                 GameOver()
             }
+        } else {
+            cells[index].update()
         }
         updateInfoLabel()
         if gameSession.withAI && gameSession.currentPlayer.isO {
@@ -196,4 +185,42 @@ class TicTacToeScene: SKScene {
         
         handleTouchEnd(touches)
     }    
+}
+
+
+// MARK: - Positions
+#warning("move somewhere")
+extension SKScene {
+    
+    var padding: CGFloat { 24 }
+        
+    var center: CGPoint {
+        CGPoint(x: size.width / 2, y: size.height / 2)
+    }
+    
+    var topRight: CGPoint {
+        CGPoint(x: size.width - padding, y: size.height - padding)
+    }
+    
+    var topLeft: CGPoint {
+        CGPoint(x: .zero + padding, y: size.height - padding)
+    }
+    
+    var top: CGPoint {
+        CGPoint(x: size.width / 2, y: size.height - padding)
+    }
+    
+    
+    var infoPosition: CGPoint {
+        CGPoint(x: center.x, y: center.y + cellSize.height * 2)
+    }
+    
+    var cellSize: CGSize {
+        let thirdOfWidth = size.width / 3 - padding
+        return CGSize(width: thirdOfWidth, height: thirdOfWidth)
+    }
+    
+    var cellPositionAtIndexZero: CGPoint {
+        CGPoint(x: center.x - cellSize.width, y: center.y + cellSize.height)
+    }
 }

@@ -9,15 +9,11 @@ import SpriteKit
 
 class NewGameScene: SKScene {
     
-    private var center: CGPoint!
-    
     weak var gameScene: TicTacToeScene!
     
     override func sceneDidLoad() {
         super.sceneDidLoad()
         anchorPoint = CGPoint(x: 0.0, y: 0.0)
-        
-        center = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
         
         addBackground()
 
@@ -31,7 +27,7 @@ class NewGameScene: SKScene {
     
     private func addBackground() {
         let background = SKSpriteNode(imageNamed: "background")
-        background.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
+        background.position = center
         background.zPosition = -1
         background.blendMode = .replace
         background.size = size
@@ -39,13 +35,13 @@ class NewGameScene: SKScene {
     }
     
     private func addNewGameButton() {
-        var ngpos = center!
-        ngpos.y += 70
-        addButton(withText: "Start New Game", at: ngpos)
+        var pos = center
+        pos.y += 70
+        addButton(withText: "Start New Game", at: pos)
     }
     
     private func addNewGameWithAIButton() {
-        var pos = center!
+        var pos = center
         pos.y -= 70
         addButton(withText: "Start New Game with AI", at: pos)
     }
