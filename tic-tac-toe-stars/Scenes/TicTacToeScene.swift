@@ -162,7 +162,7 @@ class TicTacToeScene: SKScene {
             
             if let winCells = gameSession.winCells {
                 GameOver(with: winCells)
-            } else if gameSession.isFull {
+            } else if gameSession.isEnded {
                 GameOver()
             } else {
                 updateInfoLabel()

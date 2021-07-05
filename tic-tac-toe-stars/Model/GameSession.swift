@@ -17,11 +17,11 @@ class GameSession: NSObject {
         allMoves.count.isMultiple(of: 2) ? Player.X : Player.O
     }
     
-    func advance(with index: Int) {
+    func advance(with move: Int) {
         if currentPlayer.isX {
-            moves.X.insert(index)
+            moves.X.insert(move)
         } else {
-            moves.O.insert(index)
+            moves.O.insert(move)
         }
     }
     
@@ -51,12 +51,12 @@ class GameSession: NSObject {
         moves.X.union(moves.O)
     }
     
-    var isFull: Bool {
+    var isEnded: Bool {
         moves.X.count == 5
     }
     
-    func isPossible(move index: Int) -> Bool {
-        remainingMoves.contains(index)
+    func isPossible(move: Int) -> Bool {
+        remainingMoves.contains(move)
     }
     
     var winCells: Set<Int>? {

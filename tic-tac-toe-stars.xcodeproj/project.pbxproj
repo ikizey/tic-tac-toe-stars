@@ -85,12 +85,11 @@
 			isa = PBXGroup;
 			children = (
 				97157DD526923BD2001890B4 /* Model */,
+				978B5DE52692956B00A5D476 /* Scenes */,
 				97682311268F8308001C4931 /* BoardCell.swift */,
 				97367DD72690F43A00B35C95 /* SettingsMenu.swift */,
-				976822FD268E54E1001C4931 /* TicTacToeScene.swift */,
-				97367DDA26910E9300B35C95 /* NewGameScene.swift */,
 				976822ED268E5455001C4931 /* TicTakToeGameController.swift */,
-				97157DD126921A3A001890B4 /* Move.wav */,
+				978B5DE42692937200A5D476 /* Assets */,
 				9768230C268F22F5001C4931 /* Supporting files */,
 			);
 			path = "tic-tac-toe-stars";
@@ -100,11 +99,28 @@
 			isa = PBXGroup;
 			children = (
 				976822E5268E5455001C4931 /* AppDelegate.swift */,
-				976822F2268E5456001C4931 /* Assets.xcassets */,
 				976822F4268E5456001C4931 /* Info.plist */,
 				976822EF268E5455001C4931 /* Main.storyboard */,
 			);
 			path = "Supporting files";
+			sourceTree = "<group>";
+		};
+		978B5DE42692937200A5D476 /* Assets */ = {
+			isa = PBXGroup;
+			children = (
+				976822F2268E5456001C4931 /* Assets.xcassets */,
+				97157DD126921A3A001890B4 /* Move.wav */,
+			);
+			path = Assets;
+			sourceTree = "<group>";
+		};
+		978B5DE52692956B00A5D476 /* Scenes */ = {
+			isa = PBXGroup;
+			children = (
+				97367DDA26910E9300B35C95 /* NewGameScene.swift */,
+				976822FD268E54E1001C4931 /* TicTacToeScene.swift */,
+			);
+			path = Scenes;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
