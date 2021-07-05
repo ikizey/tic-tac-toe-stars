@@ -3,23 +3,4 @@
    uuid = "45B14D05-75E2-4DB0-8BDB-7DCAC5830764"
    type = "1"
    version = "2.0">
-   <Breakpoints>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "345CD845-ADCA-403B-B57A-6C2BB75B1702"
-            shouldBeEnabled = "No"
-            condition = "gameSession.withAI == true"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "tic-tac-toe-stars/TicTacToeScene.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "160"
-            endingLineNumber = "160"
-            landmarkName = "makeMove(with:)"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-   </Breakpoints>
 </Bucket>

@@ -42,8 +42,6 @@ extension GameSession {
             lhs.playerId == rhs.playerId
         }
     }
-    
-
 }
 
 

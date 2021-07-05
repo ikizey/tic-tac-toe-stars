@@ -11,21 +11,73 @@ class GameSession: NSObject {
     
     var withAI = false
 
-    var board = GameBoard()
+    var board = GameBoard.board
     
     var currentPlayer: Player {
-        board.allMoves.count.isMultiple(of: 2) ? Player.X : Player.O
+        allMoves.count.isMultiple(of: 2) ? Player.X : Player.O
     }
     
-    func progress(with index: Int) {
+    func advance(with index: Int) {
         if currentPlayer.isX {
-            board.moves.X.insert(index)
+            moves.X.insert(index)
         } else {
-            board.moves.O.insert(index)
+            moves.O.insert(index)
         }
     }
+    
+    func restart() {
+        moves.X.removeAll()
+        moves.O.removeAll()
+    }
+    
+    // MARK: - Moves
+    let winMoves = [Set(arrayLiteral: 0, 1, 2), //rows
+                    Set(arrayLiteral: 3, 4, 5),
+                    Set(arrayLiteral: 6, 7, 8),
+                    Set(arrayLiteral: 0, 3, 6), // colums
+                    Set(arrayLiteral: 1, 4, 7),
+                    Set(arrayLiteral: 2, 5, 8),
+                    Set(arrayLiteral: 0, 4, 8), // diagonals
+                    Set(arrayLiteral: 2, 4, 6)]
+    
+    var moves = (X: Set<Int>(),
+                 O: Set<Int>())
+    
+    var remainingMoves: [Int] {
+        Array(Set(board.cells).subtracting(allMoves))
+    }
+    
+    var allMoves: Set<Int> {
+        moves.X.union(moves.O)
+    }
+    
+    var isFull: Bool {
+        moves.X.count == 5
+    }
+    
+    func isPossible(move index: Int) -> Bool {
+        remainingMoves.contains(index)
+    }
+    
+    var winCells: Set<Int>? {
+        guard allMoves.count >= 5 else { return nil }
+        
+        var winCombination = Set<Int>()
+        
+        for moves in [moves.X, moves.O] {
+            for winMove in winMoves {
+                if winMove.isSubset(of: moves) {
+                    winCombination.formUnion(winMove)
+                }
+            }
+            if !winCombination.isEmpty { return winCombination }
+        }
+        return winCombination.isEmpty ? nil : winCombination
+    }
+    
 }
 
+// MARK: - GKGameModel
 
 extension GameSession: GKGameModel {
     
@@ -37,19 +89,17 @@ extension GameSession: GKGameModel {
         return copy
     }
     
+    // MARK: - GKGameModel
     
     func setGameModel(_ gameModel: GKGameModel) {
-        print(#function)
         if let gameSessionCopy = gameModel as? GameSession {
-            board.moves.X = gameSessionCopy.board.moves.X
-            board.moves.O = gameSessionCopy.board.moves.O
+            moves.X = gameSessionCopy.moves.X
+            moves.O = gameSessionCopy.moves.O
         }
     }
     
-    // MARK: - GKGameModel
-    
     var players: [GKGameModelPlayer]? {
-        return [Player.X, Player.O]
+        [Player.X, Player.O]
     }
     
     var activePlayer: GKGameModelPlayer? {
@@ -59,8 +109,8 @@ extension GameSession: GKGameModel {
     func isWin(for player: GKGameModelPlayer) -> Bool {
         guard let player = player as? Player else { return false }
         
-        let playerMoves = player.playerId == 0 ? board.moves.X : board.moves.O
-        for winMove in board.winMoves {
+        let playerMoves = player.playerId == 0 ? moves.X : moves.O
+        for winMove in winMoves {
             if winMove.isSubset(of: playerMoves) {
                 return true
             }
@@ -79,7 +129,7 @@ extension GameSession: GKGameModel {
     
     func gameModelUpdates(for player: GKGameModelPlayer) -> [GKGameModelUpdate]? {
         guard let _ = player as? Player else { return nil }
-        let intMoves = board.remainingMoves
+        let intMoves = remainingMoves
         if intMoves.isEmpty { return nil }
         
         var moves = [Move]()
@@ -93,8 +143,10 @@ extension GameSession: GKGameModel {
     
     func apply(_ gameModelUpdate: GKGameModelUpdate) {
         guard  let move = gameModelUpdate as? Move else { return }
-        progress(with: move.index)
+        advance(with: move.index)
     }
+
+    // MARK: - Scoring
     
     func score(for player: GKGameModelPlayer) -> Int {
         guard let player = player as? Player else {
@@ -104,59 +156,33 @@ extension GameSession: GKGameModel {
         if isWin(for: player) { return 5000 }
         if isLoss(for: player) { return -5000 }
         
-        let moves1 = player.isX ? board.moves.X : board.moves.O
-        let moves2 = player.opponent.isX ? board.moves.X : board.moves.O
+        let playerMoves = player.isX ? moves.X : moves.O
+        let opponentMoves = player.opponent.isX ? moves.X : moves.O
         
+        let playerScore = movesCanLeadToWin(playerMoves: playerMoves, opponentMoves: opponentMoves)
+        let opponentScore = movesCanLeadToWin(playerMoves: opponentMoves, opponentMoves: playerMoves)
+        let score = playerScore - opponentScore
         
-        print(">>player: \(player.playerId), moves: \(moves1)")
-        print("oppplayer: \(player.opponent.playerId), moves: \(moves2)")
-        var wins1 = board.winMoves
-        for (i, win) in wins1.enumerated().reversed() {
-            let intersection = win.intersection(moves2)
+        return score == 0 ? playerScore : score
+    }
+    // not part of GKGameModel, just helper function
+    func movesCanLeadToWin(playerMoves: Set<Int>, opponentMoves: Set<Int>) -> Int {
+        var wins = winMoves
+        
+        // remove from win combinations all, that blocked by opponent
+        for (i, win) in wins.enumerated().reversed() {
+            let intersection = win.intersection(opponentMoves)
             if !intersection.isEmpty {
-                wins1.remove(at: i)
+                wins.remove(at: i)
             }
         }
-        print("wins: \(wins1)")
-        var intersections1 = [Int]()
-        for winMove in wins1 {
-            intersections1.append(winMove.intersection(moves1).count)
-            //print("my moves: \(moves1)")
-            //print("moves | wins \(winMove.intersection(moves1))")
-            //print(winMove.intersection(moves1).count)
-            //print("------------------")
-        }
-        print("||: \(intersections1)")
-        print(">>>>>>>: \(intersections1.filter({$0 != 0}).count)")
-        print("------------------")
         
-        
-        
-        var wins2 = board.winMoves
-        for (i, win) in wins1.enumerated().reversed() {
-            let intersection = win.intersection(moves1)
-            if !intersection.isEmpty {
-                wins2.remove(at: i)
-            }
-        }
-        print("wins: \(wins2)")
-        let intersections2 = [Int]()
-        for winMove in wins2 {
-            intersections1.append(winMove.intersection(moves2).count)
-            //print("my moves: \(moves1)")
-            //print("moves | wins \(winMove.intersection(moves1))")
-            //print(winMove.intersection(moves1).count)
-            //print("------------------")
-        }
-        print("||: \(intersections2)")
-        print(">>>>>>>: \(intersections2.filter({$0 != 0}).count)")
-        print("------------------")
-        
-        var score = intersections1.filter({$0 != 0}).count - intersections2.filter({$0 != 0}).count
-        if score == 0 {
-            score = intersections1.filter({$0 != 0}).count
+        var intersections = [Int]()
+        #warning("alg can be wastly improved")
+        for winMove in wins {
+            intersections.append(winMove.intersection(playerMoves).count)
         }
         
-        return score
+        return intersections.filter({$0 != 0}).count
     }
 }

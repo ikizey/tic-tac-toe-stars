@@ -156,13 +156,13 @@ class TicTacToeScene: SKScene {
     }
 
     func makeMove(with index: Int) {
-        if gameSession.board.isPossible(move: index) {
+        if gameSession.isPossible(move: index) {
             self.cells[index].mark(with: textures[gameSession.currentPlayer.playerId])
-            gameSession.progress(with: index)
+            gameSession.advance(with: index)
             
-            if let winCells = gameSession.board.winCells {
+            if let winCells = gameSession.winCells {
                 GameOver(with: winCells)
-            } else if gameSession.board.isFull {
+            } else if gameSession.isFull {
                 GameOver()
             } else {
                 updateInfoLabel()
@@ -196,7 +196,7 @@ class TicTacToeScene: SKScene {
             }
         }
 
-        gameSession.board.reset()
+        gameSession.restart()
         
         for cell in cells {
             cell.unmark()
