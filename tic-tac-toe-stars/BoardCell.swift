@@ -11,33 +11,22 @@ class BoardCell: SKShapeNode {
 
     var index: Int!
     
-    let action = Action.do
-    
+    private let action = Action.do
+    private let textures = Texutre.textures
     private var image: SKSpriteNode!
-    
-    func spinAndScale() {
-        image.run(action.spinAndScale)
-    }
-    
-    func spin() {
-        image.run(Action.spin)
-    }
-    
-    func mark(with texture: SKTexture) {
-        image = SKSpriteNode(texture: texture)
-        addChild(image)
-        playSound()
-        spin()
-    }
-    
-    func unmark() {
-        guard let image = image else { return }
 
-        image.run(action.remove)
+    func update(byPlayer playerId: Int? = nil) {
+        if let playerId = playerId {
+            image = SKSpriteNode(texture: textures[playerId])
+            addChild(image)
+        }
+        image.run(action.spinAndSound)
     }
     
-    func playSound() {
-        run(action.playTapSound)
+    func clear() {
+        guard image != nil else { return }
+        
+        image.run(action.remove)
     }
 }
 
@@ -49,14 +38,11 @@ extension BoardCell {
         
         static let `do` = Action()
         
-        
         let scaleIn: SKAction
-        
         let scaleOut: SKAction
-        
         let remove: SKAction
-        
         let spinAndScale: SKAction
+        let spinAndSound: SKAction
         
         static var spin: SKAction {
             //let direction = CGFloat([-1, 1].randomElement()!) // not fun
@@ -75,15 +61,28 @@ extension BoardCell {
             let rm = SKAction.customAction(withDuration: 1, actionBlock: { node, duration in
                 node.removeFromParent()
             })
-            remove = SKAction.sequence([scaleOut, rm])
+            let spinOutAndScaleGroup = SKAction.group([Action.spin, scaleOut])
+            remove = SKAction.sequence([spinOutAndScaleGroup, rm])
             
-            let spinAndScaleGroup = SKAction.group([Action.spin, scaleIn])
-            spinAndScale = SKAction.sequence([spinAndScaleGroup,
-                                              spinAndScaleGroup.reversed()])
+            let spinInAndScaleGroup = SKAction.group([Action.spin, scaleIn])
+            spinAndScale = SKAction.sequence([spinInAndScaleGroup,
+                                              spinInAndScaleGroup.reversed()])
             
             let soundName = "Move.wav"
             playTapSound = .playSoundFileNamed(soundName, waitForCompletion: false)
+            
+            let group = SKAction.group([spinAndScale, playTapSound])
+            spinAndSound = group
         }
     }
+}
+
+// MARK: - Textures
+
+extension BoardCell {
     
+    struct Texutre {
+        static let textures = [SKTexture(imageNamed: "star"), SKTexture(imageNamed: "butterfly")]
+        private init() {}
+    }
 }

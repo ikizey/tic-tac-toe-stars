@@ -10,36 +10,30 @@ import SpriteKit
 class TicTacToeScene: SKScene {
     
     weak var newGameScene: NewGameScene!
-    
-    var infoLabel: SKLabelNode!
-    
-    var settingsLabel: SKSpriteNode!
-    var settingsMenu: SettingsMenu!
-    
-    var cells = [BoardCell]()
-    
-    var gameSession: GameSession = GameSession()
     var AI: Bool = false {
         didSet {
             gameSession.withAI = AI
         }
     }
-    var strategist: Strategist!
+    private var cells = [BoardCell]()
+    
+    private var infoLabel: SKLabelNode!
+    private var settingsLabel: SKSpriteNode!
+//    var settingsMenu: SettingsMenu!
+    
+    private var gameSession: GameSession = GameSession()
+    private var strategist: Strategist!
     
     private var cellPositionAtIndexZero: CGPoint!
     private var cellSize: CGSize!
     private var center: CGPoint!
     
-    #warning("move somewhere")
-    private let textures = [SKTexture(imageNamed: "star"), SKTexture(imageNamed: "butterfly")]
-    
-    override func willMove(from view: SKView) {
-        
-    }
-    
     override func sceneDidLoad() {
         super.sceneDidLoad()
 
+        strategist = Strategist(model: gameSession)
+        strategist.model = gameSession
+        
         anchorPoint = CGPoint(x: 0.0, y: 0.0)
         
         let padding: CGFloat = 20
@@ -50,15 +44,8 @@ class TicTacToeScene: SKScene {
         
         addBackground()
         addSettingsSprite()
-        
-        strategist = Strategist(model: gameSession)
-        strategist.model = gameSession
-        
         addCells()
-        
         setInfoLabel()
-        updateInfoLabel()
-        
         //addSettingsMenu()
     }
         
@@ -94,6 +81,7 @@ class TicTacToeScene: SKScene {
         infoLabel.fontColor = UIColor.systemIndigo
         infoLabel.position = CGPoint(x: center.x, y: center.y + cellSize.height * 2)
         addChild(infoLabel)
+        updateInfoLabel()
     }
     
     private func updateInfoLabel() {
@@ -112,7 +100,6 @@ class TicTacToeScene: SKScene {
     }
     
     private func determinePositionForCell(with index: Int) -> CGPoint {
-        
         let col = CGFloat(index % gameSession.board.maxColumns)
         let row = CGFloat(Int(index / gameSession.board.maxRows))
         
@@ -126,14 +113,14 @@ class TicTacToeScene: SKScene {
         settingsLabel.name = "sun"
         settingsLabel.zPosition = 2
         settingsLabel.anchorPoint = CGPoint(x: 1, y: 1)
-        let xPos = self.size.width - 24
-        let yPos = self.size.height - 24
+        let xPos = size.width - 24
+        let yPos = size.height - 24
         settingsLabel.position = CGPoint(x: xPos, y: yPos)
         addChild(settingsLabel)
     }
     
-    fileprivate func handleTouchEnd(_ touches: Set<UITouch>) {
-        if gameSession.withAI && gameSession.currentPlayer.playerId == 1 { return }
+    private func handleTouchEnd(_ touches: Set<UITouch>) {
+        if gameSession.withAI && gameSession.currentPlayer.isO { return }
         
         guard let touch = touches.first else { return }
         let touchedNodes = nodes(at: touch.location(in: self))
@@ -159,26 +146,23 @@ class TicTacToeScene: SKScene {
 
     func makeMove(with index: Int) {
         if gameSession.isPossible(move: index) {
-            self.cells[index].mark(with: textures[gameSession.currentPlayer.playerId])
+            cells[index].update(byPlayer: gameSession.currentPlayer.playerId)
             gameSession.advance(with: index)
             
             if let winCells = gameSession.winCells {
-                GameOver(with: winCells)
+                winAnimation(with: winCells)
+                GameOver()
             } else if gameSession.isEnded {
                 GameOver()
-            } else {
-                updateInfoLabel()
             }
-            
-        } else {
-            cells[index].spinAndScale()
         }
-        if gameSession.withAI && gameSession.currentPlayer.isO { //
+        updateInfoLabel()
+        if gameSession.withAI && gameSession.currentPlayer.isO {
             processAIMove()
         }
     }
       
-    fileprivate func processAIMove() {
+    private func processAIMove() {
         DispatchQueue.global().async { [unowned self] in
             let strategistTime = CFAbsoluteTimeGetCurrent()
             guard let bestMove = self.strategist.bestMove else { return }
@@ -191,19 +175,14 @@ class TicTacToeScene: SKScene {
         }
     }
     
-    func GameOver(with indices: Set<Int>? = nil) {
-        if let indices = indices {
-            for i in  indices {
-                cells[i].spinAndScale()
-            }
-        }
-
-        gameSession.restart()
+    func winAnimation(with indices: Set<Int>) {
+        cells.forEach({ if indices.contains($0.index) {$0.update()}})
+    }
+    
+    func GameOver() {
+        cells.forEach( {$0.clear()} )
         
-        for cell in cells {
-            cell.unmark()
-        }
-        updateInfoLabel()
+        gameSession.restart()
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
