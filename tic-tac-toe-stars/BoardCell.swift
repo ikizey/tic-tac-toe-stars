@@ -11,7 +11,6 @@ class BoardCell: SKShapeNode {
 
     var index: Int!
     
-    private let action = Action.do
     private let textures = Texutre.textures
     private var image: SKSpriteNode!
 
@@ -20,60 +19,42 @@ class BoardCell: SKShapeNode {
             image = SKSpriteNode(texture: textures[playerId])
             addChild(image)
         }
-        image.run(action.spinAndSound)
+        image.run(SKAction.spinAndSound)
     }
     
     func clear() {
         guard image != nil else { return }
         
-        image.run(action.remove)
+        image.run(SKAction.remove)
     }
 }
 
 // MARK: - Actions
 
-extension BoardCell {
+extension SKAction {
+    static var remove: SKAction = {
+        let scaleOut = SKAction.scale(by: 0, duration: 1)
+        let rm = SKAction.customAction(withDuration: 1, actionBlock: { node, duration in
+            node.removeFromParent()
+        })
+        let spinOutAndScaleGroup = SKAction.group([SKAction.randomSpin, scaleOut])
+        return SKAction.sequence([spinOutAndScaleGroup, rm])
+    }()
     
-    struct Action {
-        
-        static let `do` = Action()
-        
-        let scaleIn: SKAction
-        let scaleOut: SKAction
-        let remove: SKAction
-        let spinAndScale: SKAction
-        let spinAndSound: SKAction
-        
-        static var spin: SKAction {
-            //let direction = CGFloat([-1, 1].randomElement()!) // not fun
-            let rotations = CGFloat.random(in: 2...4)
-            let action = SKAction.rotate(byAngle: /*direction * */.pi * rotations, duration: 0.5)
-            return action
-        }
-        
-        let playTapSound: SKAction
-        
-        private init() {
-            scaleIn = SKAction.scale(by: 1.2, duration: 0.25)
-            
-            scaleOut = SKAction.scale(by: 0, duration: 1)
-            
-            let rm = SKAction.customAction(withDuration: 1, actionBlock: { node, duration in
-                node.removeFromParent()
-            })
-            let spinOutAndScaleGroup = SKAction.group([Action.spin, scaleOut])
-            remove = SKAction.sequence([spinOutAndScaleGroup, rm])
-            
-            let spinInAndScaleGroup = SKAction.group([Action.spin, scaleIn])
-            spinAndScale = SKAction.sequence([spinInAndScaleGroup,
+    static var spinAndSound: SKAction = {
+        let scaleIn = SKAction.scale(by: 1.2, duration: 0.25)
+        let playTapSound = SKAction.playSoundFileNamed("Move.wav", waitForCompletion: false)
+        let spinInAndScaleGroup = SKAction.group([SKAction.randomSpin, scaleIn])
+        let spinAndScale = SKAction.sequence([spinInAndScaleGroup,
                                               spinInAndScaleGroup.reversed()])
-            
-            let soundName = "Move.wav"
-            playTapSound = .playSoundFileNamed(soundName, waitForCompletion: false)
-            
-            let group = SKAction.group([spinAndScale, playTapSound])
-            spinAndSound = group
-        }
+        return SKAction.group([spinAndScale, playTapSound])
+    }()
+    
+    private static var randomSpin: SKAction {
+        //let direction = CGFloat([-1, 1].randomElement()!) // not fun
+        let rotations = CGFloat.random(in: 2...4)
+        let action = SKAction.rotate(byAngle: /*direction * */.pi * rotations, duration: 0.5)
+        return action
     }
 }
 
