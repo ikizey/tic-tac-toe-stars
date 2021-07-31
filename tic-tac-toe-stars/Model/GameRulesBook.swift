@@ -130,7 +130,9 @@ struct TTTRulesBook3x3: GameRulesBook {
     }
     
     func canMake(move: M) -> Bool {
-        board.unoccupiedSpaces.contains(move.space) && move.space.type == .on
+        board.unoccupiedSpaces.contains(move.space)
+            && move.space.type == .on
+            
             ? true : false
     }
 }

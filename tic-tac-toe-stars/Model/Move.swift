@@ -14,10 +14,6 @@ class Move: NSObject, GameMove, GKGameModelUpdate {
     let playerId: Int
     var value: Int = 0
     
-//    init(_ index: Int) {
-//        self.index = index
-//    }
-    
     init(playerId: Int, space: S) {
         self.playerId = playerId
         self.space = space
