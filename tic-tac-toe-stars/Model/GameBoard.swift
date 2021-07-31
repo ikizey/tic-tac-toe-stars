@@ -2,21 +2,20 @@
 //  Board.swift
 //  tic-tac-toe-stars
 //
-//  Created by PrincePhoenix on 02.07.2021.
+//  Created by PrincePhoenix on 31.07.2021.
 //
 
-extension GameSession {
+import Foundation
+
+protocol GameBoard {
+    associatedtype S: GameBoardSpace & Hashable
+    associatedtype M: GameMove & Equatable
     
-    struct GameBoard {
-        
-        static let board = GameBoard()
-        
-        let maxRows = 3
-        let maxColumns = 3
-        let cells: [Int]
-        
-        private init() {
-            cells = Array(0..<maxRows * maxColumns)
-        }
-    }
+    var spaces: [S] { get set }
+    var isFull: Bool { get }
+    var madeMoves: [M] { set get }
+    var unoccupiedSpaces: [S] { get }
+    
+    mutating func make(move: M)
+    mutating func reset()
 }

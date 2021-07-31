@@ -18,15 +18,15 @@ struct Strategist {
         return strategist
     }()
     
-    var model: GameSession {
+    var game: GameSession {
         didSet {
-            strategist.gameModel = model
+            strategist.gameModel = game
         }
     }
     
-    var bestMove: Int? {
-        if let move = strategist.bestMove(for: model.currentPlayer) as? Move {
-            return move.index
+    var bestMove: Move? {
+        if let move = strategist.bestMove(for: game.byRules.currentPlayer) as? Move {
+            return move
         }
         return nil
     }

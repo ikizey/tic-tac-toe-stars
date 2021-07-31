@@ -10,71 +10,27 @@ import GameplayKit
 class GameSession: NSObject {
     
     var withAI = false
-
-    var board = GameBoard.board
-    
-    var currentPlayer: Player {
-        allMoves.count.isMultiple(of: 2) ? Player.X : Player.O
-    }
-    
-    func advance(with move: Int) {
-        if currentPlayer.isX {
-            moves.X.insert(move)
-        } else {
-            moves.O.insert(move)
-        }
-    }
+    var byRules = TTTRulesBook3x3()
     
     func restart() {
-        moves.X.removeAll()
-        moves.O.removeAll()
+        byRules.board.reset()
     }
     
-    // MARK: - Moves
-    let winMoves = [Set(arrayLiteral: 0, 1, 2), //rows
-                    Set(arrayLiteral: 3, 4, 5),
-                    Set(arrayLiteral: 6, 7, 8),
-                    Set(arrayLiteral: 0, 3, 6), // colums
-                    Set(arrayLiteral: 1, 4, 7),
-                    Set(arrayLiteral: 2, 5, 8),
-                    Set(arrayLiteral: 0, 4, 8), // diagonals
-                    Set(arrayLiteral: 2, 4, 6)]
-    
-    var moves = (X: Set<Int>(),
-                 O: Set<Int>())
-    
-    var remainingMoves: [Int] {
-        Array(Set(board.cells).subtracting(allMoves))
+    private func generateMove(from index: Int) -> Move {
+        let space = byRules.board.spaces.filter({ $0.position == index }).first!
+        let playerId = byRules.currentPlayer.playerId
+        return Move(playerId: playerId, space: space)
     }
     
-    var allMoves: Set<Int> {
-        moves.X.union(moves.O)
+    func canMake(move: Int) -> Bool {
+        let move = generateMove(from: move)
+        return byRules.canMake(move: move)
     }
     
-    var isEnded: Bool {
-        moves.X.count == 5
+    func advance(with index: Int) {
+        let move = generateMove(from: index)
+        byRules.advance(with: move)
     }
-    
-    func isPossible(move: Int) -> Bool {
-        remainingMoves.contains(move)
-    }
-    
-    var winCells: Set<Int>? {
-        guard allMoves.count >= 5 else { return nil }
-        
-        var winCombination = Set<Int>()
-        
-        for moves in [moves.X, moves.O] {
-            for winMove in winMoves {
-                if winMove.isSubset(of: moves) {
-                    winCombination.formUnion(winMove)
-                }
-            }
-            if !winCombination.isEmpty { return winCombination }
-        }
-        return winCombination.isEmpty ? nil : winCombination
-    }
-    
 }
 
 // MARK: - GKGameModel
@@ -92,58 +48,46 @@ extension GameSession: GKGameModel {
     // MARK: - GKGameModel
     
     func setGameModel(_ gameModel: GKGameModel) {
-        if let gameSessionCopy = gameModel as? GameSession {
-            moves.X = gameSessionCopy.moves.X
-            moves.O = gameSessionCopy.moves.O
+        if let gameSessionOriginal = gameModel as? GameSession {
+            byRules.board.madeMoves = gameSessionOriginal.byRules.board.madeMoves
         }
     }
     
     var players: [GKGameModelPlayer]? {
-        [Player.X, Player.O]
+        byRules.players
     }
     
     var activePlayer: GKGameModelPlayer? {
-        currentPlayer
+        byRules.currentPlayer
     }
     
     func isWin(for player: GKGameModelPlayer) -> Bool {
         guard let player = player as? Player else { return false }
         
-        let playerMoves = player.playerId == 0 ? moves.X : moves.O
-        for winMove in winMoves {
-            if winMove.isSubset(of: playerMoves) {
-                return true
-            }
-        }
-        return false
+        return byRules.isWin(for: player)
     }
     
     func isLoss(for player: GKGameModelPlayer) -> Bool {
         guard let player = player as? Player else { return false }
         
-        if isWin(for: player.opponent) {
-            return true
-        }
-        return false
+        return byRules.isWin(for: player.opponent)
     }
     
     func gameModelUpdates(for player: GKGameModelPlayer) -> [GKGameModelUpdate]? {
         guard let _ = player as? Player else { return nil }
-        let intMoves = remainingMoves
-        if intMoves.isEmpty { return nil }
+        guard !byRules.board.isFull else { return nil }
         
         var moves = [Move]()
-        for move in intMoves {
-            moves.append(Move(move))
+        for space in byRules.board.unoccupiedSpaces {
+            moves.append(Move(playerId: player.playerId, space: space))
         }
-        if moves.isEmpty { return nil }
         return moves
     }
     
     
     func apply(_ gameModelUpdate: GKGameModelUpdate) {
         guard  let move = gameModelUpdate as? Move else { return }
-        advance(with: move.index)
+        byRules.advance(with: move)
     }
 
     // MARK: - Scoring
@@ -156,8 +100,8 @@ extension GameSession: GKGameModel {
         if isWin(for: player) { return 5000 }
         if isLoss(for: player) { return -5000 }
         
-        let playerMoves = player.isX ? moves.X : moves.O
-        let opponentMoves = player.opponent.isX ? moves.X : moves.O
+        let playerMoves = byRules.movesPositions(for: player)
+        let opponentMoves = byRules.movesPositions(for: player.opponent)
         
         let playerScore = movesCanLeadToWin(playerMoves: playerMoves, opponentMoves: opponentMoves)
         let opponentScore = movesCanLeadToWin(playerMoves: opponentMoves, opponentMoves: playerMoves)
@@ -167,7 +111,11 @@ extension GameSession: GKGameModel {
     }
     // not part of GKGameModel, just helper function
     func movesCanLeadToWin(playerMoves: Set<Int>, opponentMoves: Set<Int>) -> Int {
-        var wins = winMoves
+        // IMITATING OLD WAY, BEFORE RULE BOOK
+        var wins = [
+            byRules.movesPositions(for: Player.X),
+            byRules.movesPositions(for: Player.O)
+        ]
         
         // remove from win combinations all, that blocked by opponent
         for (i, win) in wins.enumerated().reversed() {

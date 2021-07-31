@@ -27,8 +27,8 @@ class TicTacToeScene: SKScene {
     override func sceneDidLoad() {
         super.sceneDidLoad()
 
-        strategist = Strategist(model: gameSession)
-        strategist.model = gameSession
+        strategist = Strategist(game: gameSession)
+        strategist.game = gameSession
         
         anchorPoint = CGPoint(x: 0.0, y: 0.0)
         
@@ -75,23 +75,23 @@ class TicTacToeScene: SKScene {
     }
     
     private func updateInfoLabel() {
-        let name = gameSession.currentPlayer.name
+        let name = gameSession.byRules.currentPlayer.name
         infoLabel.text = "\(name)'s turn"
     }
     
     private func addCells() {
-        for index in gameSession.board.cells {
+        for index in gameSession.byRules.board.spaces {
             let cell = BoardCell(rectOf: cellSize)
-            cell.index = index
-            cell.position = determinePositionForCell(with: index)
+            cell.index = index.position
+            cell.position = determinePositionForCell(with: index.position)
             cells.append(cell)
             addChild(cell)
         }
     }
     
     private func determinePositionForCell(with index: Int) -> CGPoint {
-        let col = CGFloat(index % gameSession.board.maxColumns)
-        let row = CGFloat(Int(index / gameSession.board.maxRows))
+        let col = CGFloat(index % gameSession.byRules.boardColumns)
+        let row = CGFloat(Int(index / gameSession.byRules.boardRows))
         
         let xPos = cellPositionAtIndexZero.x + cellSize.width * col
         let yPos = cellPositionAtIndexZero.y - cellSize.height * row
@@ -108,7 +108,7 @@ class TicTacToeScene: SKScene {
     }
     
     private func handleTouchEnd(_ touches: Set<UITouch>) {
-        if gameSession.withAI && gameSession.currentPlayer.isO { return }
+        if gameSession.withAI && gameSession.byRules.currentPlayer.isO { return }
         
         guard let touch = touches.first else { return }
         let touchedNodes = nodes(at: touch.location(in: self))
@@ -132,21 +132,21 @@ class TicTacToeScene: SKScene {
     }
 
     func makeMove(with index: Int) {
-        if gameSession.isPossible(move: index) {
-            cells[index].update(byPlayer: gameSession.currentPlayer.playerId)
+        if gameSession.canMake(move: index) {
+            cells[index].update(byPlayer: gameSession.byRules.currentPlayer.playerId)
             gameSession.advance(with: index)
             
-            if let winCells = gameSession.winCells {
+            if let winCells = gameSession.byRules.winSpacesPositions {
                 winAnimation(with: winCells)
                 GameOver()
-            } else if gameSession.isEnded {
+            } else if gameSession.byRules.isTie() {
                 GameOver()
             }
         } else {
             cells[index].update()
         }
         updateInfoLabel()
-        if gameSession.withAI && gameSession.currentPlayer.isO {
+        if gameSession.withAI && gameSession.byRules.currentPlayer.isO {
             processAIMove()
         }
     }
@@ -159,12 +159,12 @@ class TicTacToeScene: SKScene {
             let aiTimeCeiling = 0.3
             let delay = max(delta, aiTimeCeiling)
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                self.makeMove(with: bestMove)
+                self.makeMove(with: bestMove.space.position)
             }
         }
     }
     
-    func winAnimation(with indices: Set<Int>) {
+    func winAnimation(with indices: [Int]) {
         cells.forEach({ if indices.contains($0.index) {$0.update()}})
     }
     
